@@ -18,7 +18,7 @@ public class CollectionUtilsTest {
 
     @Before
     public void setUp() {
-        inputs = new ArrayList<>() {
+        inputs = new ArrayList<Integer>() {
             {
                 add(10);
                 add(12);
@@ -33,7 +33,7 @@ public class CollectionUtilsTest {
             }
         };
 
-        expectedResult = new HashMap<>() {
+        expectedResult = new HashMap<Integer,Long>() {
             {
                 put(10, 1L);
                 put(12, 3L);
@@ -59,7 +59,7 @@ public class CollectionUtilsTest {
 
     @Test
     public void testInputHasNull() {
-        inputs = new ArrayList<>() {
+        inputs = new ArrayList<Integer>() {
             {
                 add(null);
                 add(null);
@@ -73,7 +73,7 @@ public class CollectionUtilsTest {
 
     @Test
     public void testWithString() {
-        List<String> strInputs = new ArrayList<>() {
+        List<String> strInputs = new ArrayList<String>() {
             {
                 add("one");
                 add("two");

@@ -4,127 +4,105 @@ import java.util.*;
 
 public class WideList<T> implements List<T> {
 
-    private static final int INITIAL_CAPACITY = 16;
-    private static final double FILLING_TRIGGER_PERCENT = 0.7;
+    static final int DEFAULT_INITIAL_CAPACITY = 16;
+    static final float DEFAULT_PERMITTED_FILLING = 0.7f;
+    static final float EXTENSION_PERCENT = 1.4f;
 
-    private final double fillingPercent;
-
+    private final float permittedFilling;
     private int capacity;
-    private int length;
-    private Object[] elements;
+    private int elementsCount;
+    protected Object[] elements;
 
-    public WideList(Collection<T> fromCollection) {
-        this.capacity = newCapacity(fromCollection.size());
-        fillingPercent = FILLING_TRIGGER_PERCENT;
-        elements = new Object[capacity];
 
-        fromCollection.toArray(elements);
-        length = fromCollection.size();
+    public WideList() {
+        this(DEFAULT_INITIAL_CAPACITY, DEFAULT_PERMITTED_FILLING);
     }
 
     public WideList(int initialCapacity) {
-        this(initialCapacity, FILLING_TRIGGER_PERCENT);
+        this(initialCapacity, DEFAULT_PERMITTED_FILLING);
     }
 
-    public WideList(int initialCapacity, double fillingTriggerPercent) {
+    public WideList(int initialCapacity, float fillingTriggerPercent) {
         this.capacity = initialCapacity;
-        this.fillingPercent = fillingTriggerPercent;
-        this.length = 0;
+        this.permittedFilling = fillingTriggerPercent;
+        this.elements = new Object[capacity];
+        this.elementsCount = 0;
     }
 
-    private static int newCapacity(int size) {
-        return (int) (size * (1 + FILLING_TRIGGER_PERCENT) + 1);
+    public WideList(Collection<T> fromCollection) {
+        this.elementsCount = fromCollection.size();
+        ensureCapacity(elementsCount);
+        this.elements = new Object[capacity];
+        fromCollection.toArray(elements);
+
+        this.permittedFilling = DEFAULT_PERMITTED_FILLING;
     }
+
+    private void ensureCapacity(int minSize) {
+
+        double filledPercent = (double) minSize / capacity;
+        if (filledPercent >= permittedFilling) {
+            growCapacity(minSize);
+            redefineElements();
+        }
+    }
+
+    private void growCapacity(int minSize) {
+        int newCapacity = (int) (minSize * EXTENSION_PERCENT + 1);
+        this.capacity = newCapacity > capacity ? newCapacity : capacity;
+    }
+
+    private void redefineElements() {
+        elements = Arrays.copyOf(elements, capacity);
+    }
+
+
 
     @Override
     public int size() {
-        return length;
+        return elementsCount;
     }
 
     @Override
     public boolean isEmpty() {
-        return elements.length == 0;
+        return elementsCount == 0;
     }
 
     @Override
     public boolean contains(Object o) {
-        return false;
+        return indexOf(o) >= 0;
     }
 
     @Override
     public Iterator<T> iterator() {
-        return null;
+        return new ElementsIterator();
     }
 
     @Override
     public Object[] toArray() {
-        return Arrays.copyOf(elements, length);
+        return Arrays.copyOf(elements, elementsCount);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T1> T1[] toArray(T1[] a) {
-        copyRange(elements,0,length,a,0,a.length);
-        return a;
+        return (T1[]) Arrays.copyOf(elements, elementsCount, a.getClass());
     }
 
-    private <T1> void copyRange(T1[] fromArray, int first1, int last1,
-                                T1[] toArray, int first2, int last2) {
-
-        boolean isCorrect = checkIndexBounds(fromArray, first1) &&
-                checkIndexBounds(fromArray, last1-1) &&
-                checkIndexBounds(toArray, first2) &&
-                checkIndexBounds(toArray, last2-1);
-
-        if (isCorrect) {
-            copyArrayElements(fromArray, first1, last1, toArray, first2, last2);
-        }
+    private <T1> boolean isIndexInBounds(int index) {
+        return index >= 0 && index < capacity;
     }
 
-    private <T1> boolean checkIndexBounds(T1[] array, int index) {
-        return index >= 0 && index < array.length;
-    }
-
-    private <T1> void copyArrayElements(T1[] fromArray, int first1, int last1,
-                                        T1[] toArray, int first2, int last2){
-
-        while (first1 < last1 && first2 < last2) {
-            toArray[first2++] = fromArray[first1++];
-        }
-    }
 
     @Override
     public boolean add(T t) {
-        ensureCapacity();
-        elements[length++] = t;
+        add(elementsCount, t);
         return true;
-    }
-
-    private void ensureCapacity() {
-        if (length / capacity >= fillingPercent) {
-            increaseCapacity();
-        }
-    }
-
-    private void increaseCapacity() {
-        Object[] elementsToCopy = elements;
-        int elementsCount = elementsToCopy.length;
-        capacity = newCapacity(elementsCount);
-        elements = new Object[capacity];
-        copyRange(elementsToCopy, 0, elementsCount, elements, 0, capacity);
     }
 
     @Override
     public boolean remove(Object o) {
-        return false;
-    }
-
-    private int indexOfElement(Object t) {
-        for(int i = 0; i < length; i++) {
-            if (elements[i].equals(t)) {
-                return i;
-            }
-        }
-        return -1;
+        throw new UnsupportedOperationException("Unsupported remove operation in this type of collection");
     }
 
     @Override
@@ -139,60 +117,87 @@ public class WideList<T> implements List<T> {
 
     @Override
     public boolean addAll(Collection<? extends T> c) {
-        return false;
+        return addAll(elementsCount, c);
     }
 
     @Override
     public boolean addAll(int index, Collection<? extends T> c) {
-        return false;
+        try {
+            int requiredCapacity = index + c.size();
+            ensureCapacity(requiredCapacity);
+            c.forEach(this::add);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        return false;
+        throw new UnsupportedOperationException("Unsupported remove operation in this type of collection");
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        return false;
+        throw new UnsupportedOperationException("Unsupported remove operation in this type of collection");
     }
 
     @Override
     public void clear() {
-        // no implementation required
+        throw new UnsupportedOperationException("Unsupported remove operation in this type of collection");
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public T get(int index) {
-        checkIndexBounds(elements, index);
-        return (T) elements[index];
+        if (isIndexInBounds(index)) {
+            return (T) elements[index];
+        }
+        return null;
     }
 
     @Override
     public T set(int index, T element) {
-        checkIndexBounds(elements, index);
-        return null;
+        T el = get(index);
+        add(index, element);
+        return el;
     }
 
     @Override
     public void add(int index, T element) {
-
+        if(!isIndexInBounds(index)) {
+            ensureCapacity(index);
+        }
+        elementsCount++;
+        elements[index] = element;
     }
 
     @Override
     public T remove(int index) {
-        return null;
+        throw new UnsupportedOperationException("Unsupported remove operation in this type of collection");
     }
 
     @Override
     public int indexOf(Object o) {
-        return 0;
+        return findFirstOrLastIndexOf(o, true);
     }
 
     @Override
     public int lastIndexOf(Object o) {
-        return 0;
+        return findFirstOrLastIndexOf(o, false);
+    }
+
+    private int findFirstOrLastIndexOf(Object o, boolean isFirst) {
+        ElementsIterator it = new ElementsIterator(isFirst);
+
+        while (it.hasNext()) {
+            Object el = it.next();
+            if (el != null && el.equals(o)) {
+                return it.getCurrentIndex();
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -208,5 +213,54 @@ public class WideList<T> implements List<T> {
     @Override
     public List<T> subList(int fromIndex, int toIndex) {
         return null;
+    }
+
+
+    protected class ElementsIterator implements Iterator<T> {
+
+        private int currentIndex;
+        private int toIndex;
+        private boolean isGrowing;
+
+
+        protected ElementsIterator() {
+            this(true);
+        }
+
+        protected ElementsIterator(boolean isGrowing) {
+            this.isGrowing = isGrowing;
+
+            if (isGrowing) {
+                currentIndex = 0;
+                toIndex = elementsCount;
+            } else {
+                currentIndex = elementsCount - 1;
+                toIndex = 0;
+            }
+        }
+
+        int getCurrentIndex() {
+            return currentIndex;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return (isGrowing && currentIndex < toIndex) || (!isGrowing && currentIndex >= toIndex);
+        }
+
+        @Override
+        public T next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException("Next element not found. Index is: " + currentIndex);
+            }
+
+            T element = get(currentIndex);
+            movePointer();
+            return element;
+        }
+
+        private void movePointer() {
+            currentIndex += isGrowing ? 1 : -1;
+        }
     }
 }
