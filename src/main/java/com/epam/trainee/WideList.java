@@ -5,7 +5,7 @@ import java.util.*;
 public class WideList<T> implements List<T> {
 
     static final int DEFAULT_INITIAL_CAPACITY = 16;
-    static final float DEFAULT_PERMITTED_FILLING = 0.7f;
+    static final float DEFAULT_PERMITTED_FILLING = 0.9f;
     static final float EXTENSION_PERCENT = 1.4f;
 
     private final float permittedFilling;
@@ -31,7 +31,7 @@ public class WideList<T> implements List<T> {
 
     public WideList(Collection<T> fromCollection) {
         this.elementsCount = fromCollection.size();
-        ensureCapacity(elementsCount);
+        growCapacity(elementsCount);
         this.elements = new Object[capacity];
         fromCollection.toArray(elements);
 
@@ -55,7 +55,6 @@ public class WideList<T> implements List<T> {
     private void redefineElements() {
         elements = Arrays.copyOf(elements, capacity);
     }
-
 
 
     @Override
@@ -89,17 +88,6 @@ public class WideList<T> implements List<T> {
         return (T1[]) Arrays.copyOf(elements, elementsCount, a.getClass());
     }
 
-    private <T1> boolean isIndexInBounds(int index) {
-        return index >= 0 && index < capacity;
-    }
-
-
-    @Override
-    public boolean add(T t) {
-        add(elementsCount, t);
-        return true;
-    }
-
     @Override
     public boolean remove(Object o) {
         throw new UnsupportedOperationException("Unsupported remove operation in this type of collection");
@@ -122,14 +110,27 @@ public class WideList<T> implements List<T> {
 
     @Override
     public boolean addAll(int index, Collection<? extends T> c) {
+        checkAddRange(index);
+
         try {
-            int requiredCapacity = index + c.size();
+            int requiredCapacity = elementsCount + c.size();
             ensureCapacity(requiredCapacity);
-            c.forEach(this::add);
+
+            if (index < elementsCount) {
+                System.arraycopy(elements, index,
+                        elements, index + c.size(), capacity - index);
+            }
+            addElements(index, c);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    private void addElements(int index, Collection<? extends T> c) {
+        for (T el : c) {
+            add(index++, el);
         }
     }
 
@@ -159,18 +160,36 @@ public class WideList<T> implements List<T> {
 
     @Override
     public T set(int index, T element) {
+        checkAddRange(index);
         T el = get(index);
-        add(index, element);
+        ensureCapacity(index);
+        elements[index] = element;
         return el;
     }
 
     @Override
+    public boolean add(T t) {
+        add(elementsCount, t);
+        return true;
+    }
+
+    @Override
     public void add(int index, T element) {
-        if(!isIndexInBounds(index)) {
-            ensureCapacity(index);
+        checkAddRange(index);
+        ensureCapacity(elementsCount + 1);
+
+        if (index < elementsCount) {
+            System.arraycopy(elements, index,
+                    elements, index + 1, elementsCount - index);
         }
         elementsCount++;
         elements[index] = element;
+    }
+
+    private void checkAddRange(int index) {
+        if (index < 0 || index > elementsCount) {
+            throw new IndexOutOfBoundsException(String.valueOf(index));
+        }
     }
 
     @Override
@@ -202,12 +221,12 @@ public class WideList<T> implements List<T> {
 
     @Override
     public ListIterator<T> listIterator() {
-        return null;
+        return new ElementsListIterator(0);
     }
 
     @Override
     public ListIterator<T> listIterator(int index) {
-        return null;
+        return new ElementsListIterator(index);
     }
 
     @Override
@@ -215,52 +234,138 @@ public class WideList<T> implements List<T> {
         return null;
     }
 
+    private boolean isIndexInBounds(int index) {
+        return index >= 0 && index < capacity;
+    }
+
+
+    @Override
+    public String toString() {
+        return Arrays.deepToString(elements);
+    }
 
     protected class ElementsIterator implements Iterator<T> {
 
-        private int currentIndex;
-        private int toIndex;
-        private boolean isGrowing;
-
+        private boolean isForwardDirection;
+        private ElementsListIterator listIterator;
 
         protected ElementsIterator() {
             this(true);
         }
 
-        protected ElementsIterator(boolean isGrowing) {
-            this.isGrowing = isGrowing;
-
-            if (isGrowing) {
-                currentIndex = 0;
-                toIndex = elementsCount;
+        protected ElementsIterator(boolean isForwardDirection) {
+            this.isForwardDirection = isForwardDirection;
+            if (isForwardDirection) {
+                listIterator = new ElementsListIterator(0);
             } else {
-                currentIndex = elementsCount - 1;
-                toIndex = 0;
+                listIterator = new ElementsListIterator(elementsCount - 1);
             }
-        }
-
-        int getCurrentIndex() {
-            return currentIndex;
         }
 
         @Override
         public boolean hasNext() {
-            return (isGrowing && currentIndex < toIndex) || (!isGrowing && currentIndex >= toIndex);
+            return isForwardDirection ? listIterator.hasNext() : listIterator.hasPrevious();
         }
 
         @Override
         public T next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException("Next element not found. Index is: " + currentIndex);
-            }
-
-            T element = get(currentIndex);
-            movePointer();
-            return element;
+            return isForwardDirection ? listIterator.next() : listIterator.previous();
         }
 
-        private void movePointer() {
-            currentIndex += isGrowing ? 1 : -1;
+        private int getCurrentIndex() {
+            return listIterator.point;
+        }
+    }
+
+
+    private class ElementsListIterator implements ListIterator<T> {
+
+
+        private int point;
+        private int head;
+        private int tail;
+        private boolean isForwardDirection;
+
+        public ElementsListIterator(int point) {
+            if (!isIndexInBounds(point)) {
+                throw new IllegalArgumentException("Can't create iterator " +
+                        "from position that out of bounds");
+            }
+            this.point = point;
+            head = 0;
+            tail = elementsCount;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return point < tail;
+        }
+
+        @Override
+        public T next() {
+            if (hasNext()) {
+                T el = get(point);
+                pointForward();
+                return el;
+            }
+            throw new NoSuchElementException("No next element found");
+        }
+
+        @Override
+        public boolean hasPrevious() {
+            return point >= head;
+        }
+
+        @Override
+        public T previous() {
+            if (hasPrevious()) {
+                T el = get(point);
+                pointBack();
+                return el;
+            }
+            throw new NoSuchElementException("No previous element found");
+        }
+
+        @Override
+        public int nextIndex() {
+            int index = point + 1;
+            return isIndexInBounds(index) ? index : -1;
+        }
+
+        @Override
+        public int previousIndex() {
+            int index = point - 1;
+            return isIndexInBounds(index) ? index : -1;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("remove");
+        }
+
+        @Override
+        public void set(T t) {
+            WideList.this.set(point, t);
+        }
+
+        @Override
+        public void add(T t) {
+            if (isForwardDirection) {
+                pointForward();
+            } else {
+                pointBack();
+            }
+            WideList.this.add(point, t);
+        }
+
+        private void pointForward() {
+            isForwardDirection = true;
+            point++;
+        }
+
+        private void pointBack() {
+            isForwardDirection = false;
+            point--;
         }
     }
 }

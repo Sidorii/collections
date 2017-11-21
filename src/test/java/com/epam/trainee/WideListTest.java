@@ -29,7 +29,6 @@ public class WideListTest {
     public void testSize() {
         assertEquals(0, wideList.size());
 
-
         wideList = new WideList<>(testContent);
         assertEquals(2, wideList.size());
     }
@@ -63,7 +62,7 @@ public class WideListTest {
     @Test
     public void testCapacityExtension() {
 
-        int toRange = (int) (DEFAULT_INITIAL_CAPACITY * DEFAULT_PERMITTED_FILLING) + 2;
+        int toRange = (int) (DEFAULT_INITIAL_CAPACITY * DEFAULT_PERMITTED_FILLING) + 1;
         int oldCapacity = wideList.elements.length; //represent current collection capacity
 
         for (int i = 0; i < toRange; i++) {
@@ -71,15 +70,15 @@ public class WideListTest {
         }
         assertEquals(toRange, wideList.size());
 
-        int newCapacity = (int) (oldCapacity*EXTENSION_PERCENT + 1); //now capacity must be increased
-        int expectedCapacity = (int) (oldCapacity * EXTENSION_PERCENT) + 1;
+        int newCapacity = (int) (oldCapacity*EXTENSION_PERCENT); //now capacity must be increased
+        int expectedCapacity = (int) (oldCapacity * EXTENSION_PERCENT);
 
         assertEquals(expectedCapacity, newCapacity);
     }
 
     @Test
     public void testCapacityNotExtensionsBeforeTime() {
-        int maxSizeBeforeExtension = (int) (DEFAULT_INITIAL_CAPACITY * DEFAULT_PERMITTED_FILLING) +1;
+        int maxSizeBeforeExtension = (int) (DEFAULT_INITIAL_CAPACITY * DEFAULT_PERMITTED_FILLING);
 
         int oldCapacity = wideList.elements.length;
 
@@ -113,6 +112,7 @@ public class WideListTest {
         for(int i = 0; i < 50; i++) {
             testContent.add((int) (Math.random() * 100));
         }
-        wideList.addAll(100500,testContent);
+        wideList.add(10);
+        wideList.addAll(1,testContent);
     }
 }

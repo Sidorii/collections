@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 public final class CollectionUtils {
 
+
     public static <T> Map<T, Long> collectionElementsCount(Collection<T> collection) {
         return collection.stream()
                 .filter(Objects::nonNull)
