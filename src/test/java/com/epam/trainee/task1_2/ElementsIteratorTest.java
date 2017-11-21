@@ -1,13 +1,11 @@
-package com.epam.trainee;
+package com.epam.trainee.task1_2;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.NoSuchElementException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ElementsIteratorTest {
 

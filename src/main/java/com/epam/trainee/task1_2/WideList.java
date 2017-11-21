@@ -1,4 +1,6 @@
-package com.epam.trainee;
+package com.epam.trainee.task1_2;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -33,14 +35,12 @@ public class WideList<T> implements List<T> {
         this.elementsCount = fromCollection.size();
         growCapacity(elementsCount);
         this.elements = new Object[capacity];
-        fromCollection.toArray(elements);
-
         this.permittedFilling = DEFAULT_PERMITTED_FILLING;
+        fromCollection.toArray(elements);
     }
 
     private void ensureCapacity(int minSize) {
-
-        double filledPercent = (double) minSize / capacity;
+        double filledPercent = ((double) minSize) / capacity;
         if (filledPercent >= permittedFilling) {
             growCapacity(minSize);
             redefineElements();
@@ -49,13 +49,12 @@ public class WideList<T> implements List<T> {
 
     private void growCapacity(int minSize) {
         int newCapacity = (int) (minSize * EXTENSION_PERCENT + 1);
-        this.capacity = newCapacity > capacity ? newCapacity : capacity;
+        this.capacity = (newCapacity > capacity) ? newCapacity : capacity;
     }
 
     private void redefineElements() {
         elements = Arrays.copyOf(elements, capacity);
     }
-
 
     @Override
     public int size() {
@@ -72,19 +71,22 @@ public class WideList<T> implements List<T> {
         return indexOf(o) >= 0;
     }
 
+    @NotNull
     @Override
     public Iterator<T> iterator() {
         return new ElementsIterator();
     }
 
+    @NotNull
     @Override
     public Object[] toArray() {
         return Arrays.copyOf(elements, elementsCount);
     }
 
+    @NotNull
     @Override
     @SuppressWarnings("unchecked")
-    public <T1> T1[] toArray(T1[] a) {
+    public <T1> T1[] toArray(@NotNull T1[] a) {
         return (T1[]) Arrays.copyOf(elements, elementsCount, a.getClass());
     }
 
@@ -94,7 +96,7 @@ public class WideList<T> implements List<T> {
     }
 
     @Override
-    public boolean containsAll(Collection<?> c) {
+    public boolean containsAll(@NotNull Collection<?> c) {
         for (Object element : c) {
             if (!contains(element)) {
                 return false;
@@ -104,12 +106,12 @@ public class WideList<T> implements List<T> {
     }
 
     @Override
-    public boolean addAll(Collection<? extends T> c) {
+    public boolean addAll(@NotNull Collection<? extends T> c) {
         return addAll(elementsCount, c);
     }
 
     @Override
-    public boolean addAll(int index, Collection<? extends T> c) {
+    public boolean addAll(int index, @NotNull Collection<? extends T> c) {
         checkAddRange(index);
 
         try {
@@ -118,7 +120,7 @@ public class WideList<T> implements List<T> {
 
             if (index < elementsCount) {
                 System.arraycopy(elements, index,
-                        elements, index + c.size(), capacity - index);
+                        elements, index + c.size(), elementsCount - index);
             }
             addElements(index, c);
             return true;
@@ -135,12 +137,12 @@ public class WideList<T> implements List<T> {
     }
 
     @Override
-    public boolean removeAll(Collection<?> c) {
+    public boolean removeAll(@NotNull Collection<?> c) {
         throw new UnsupportedOperationException("Unsupported remove operation in this type of collection");
     }
 
     @Override
-    public boolean retainAll(Collection<?> c) {
+    public boolean retainAll(@NotNull Collection<?> c) {
         throw new UnsupportedOperationException("Unsupported remove operation in this type of collection");
     }
 
@@ -162,9 +164,17 @@ public class WideList<T> implements List<T> {
     public T set(int index, T element) {
         checkAddRange(index);
         T el = get(index);
-        ensureCapacity(index);
-        elements[index] = element;
+        putElement(index, element);
         return el;
+    }
+
+    private void putElement(int index, T el) {
+        if (index == elementsCount) {
+            add(el);
+        } else {
+            ensureCapacity(index);
+            elements[index] = el;
+        }
     }
 
     @Override
@@ -182,8 +192,8 @@ public class WideList<T> implements List<T> {
             System.arraycopy(elements, index,
                     elements, index + 1, elementsCount - index);
         }
-        elementsCount++;
         elements[index] = element;
+        elementsCount++;
     }
 
     private void checkAddRange(int index) {
@@ -219,19 +229,27 @@ public class WideList<T> implements List<T> {
         return -1;
     }
 
+    @NotNull
     @Override
     public ListIterator<T> listIterator() {
         return new ElementsListIterator(0);
     }
 
+    @NotNull
     @Override
     public ListIterator<T> listIterator(int index) {
         return new ElementsListIterator(index);
     }
 
+    @NotNull
     @Override
     public List<T> subList(int fromIndex, int toIndex) {
-        return null;
+        int sublistLen = toIndex - fromIndex;
+        WideList<T> sublist = new WideList<>(sublistLen);
+        for (int i = fromIndex; i < toIndex; i++) {
+            sublist.add(get(i));
+        }
+        return sublist;
     }
 
     private boolean isIndexInBounds(int index) {
@@ -244,16 +262,16 @@ public class WideList<T> implements List<T> {
         return Arrays.deepToString(elements);
     }
 
-    protected class ElementsIterator implements Iterator<T> {
+    class ElementsIterator implements Iterator<T> {
 
         private boolean isForwardDirection;
         private ElementsListIterator listIterator;
 
-        protected ElementsIterator() {
+        ElementsIterator() {
             this(true);
         }
 
-        protected ElementsIterator(boolean isForwardDirection) {
+        ElementsIterator(boolean isForwardDirection) {
             this.isForwardDirection = isForwardDirection;
             if (isForwardDirection) {
                 listIterator = new ElementsListIterator(0);
@@ -273,20 +291,18 @@ public class WideList<T> implements List<T> {
         }
 
         private int getCurrentIndex() {
-            return listIterator.point;
+            return isForwardDirection ? listIterator.previousIndex() : listIterator.nextIndex();
         }
     }
 
 
     private class ElementsListIterator implements ListIterator<T> {
-
-
         private int point;
         private int head;
         private int tail;
         private boolean isForwardDirection;
 
-        public ElementsListIterator(int point) {
+        ElementsListIterator(int point) {
             if (!isIndexInBounds(point)) {
                 throw new IllegalArgumentException("Can't create iterator " +
                         "from position that out of bounds");

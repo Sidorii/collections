@@ -1,4 +1,4 @@
-package com.epam.trainee;
+package com.epam.trainee.task1_1;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +33,7 @@ public class CollectionUtilsTest {
             }
         };
 
-        expectedResult = new HashMap<Integer,Long>() {
+        expectedResult = new HashMap<Integer, Long>() {
             {
                 put(10, 1L);
                 put(12, 3L);
@@ -47,9 +47,7 @@ public class CollectionUtilsTest {
 
     @Test
     public void testCommonExecution() {
-
         Map<Integer, Long> elementsCount = CollectionUtils.collectionElementsCount(inputs);
-
         for (Map.Entry<Integer, Long> elementEntry : elementsCount.entrySet()) {
             Long expectedCount = expectedResult.get(elementEntry.getKey());
 
