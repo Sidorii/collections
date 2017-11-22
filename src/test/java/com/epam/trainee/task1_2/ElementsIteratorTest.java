@@ -3,13 +3,14 @@ package com.epam.trainee.task1_2;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
 import static org.junit.Assert.*;
 
 public class ElementsIteratorTest {
 
-    private WideList.ElementsIterator elementsIterator;
+    private ListIterator elementsIterator;
     private WideList<Integer> wideList;
 
     @Before
@@ -22,7 +23,7 @@ public class ElementsIteratorTest {
 
     @Test
     public void growingIteratorTest() {
-        elementsIterator = wideList.new ElementsIterator();
+        elementsIterator = wideList.listIterator();
 
         assertTrue(elementsIterator.hasNext());
         assertEquals(10, elementsIterator.next());
@@ -35,20 +36,20 @@ public class ElementsIteratorTest {
 
     @Test
     public void fallingIteratorTest() {
-        elementsIterator = wideList.new ElementsIterator(false);
+        elementsIterator = wideList.new ElementsListIterator(wideList.size()-1);
 
-        assertTrue(elementsIterator.hasNext());
-        assertEquals(15, elementsIterator.next());
-        assertTrue(elementsIterator.hasNext());
-        assertEquals(20, elementsIterator.next());
-        assertTrue(elementsIterator.hasNext());
-        assertEquals(10, elementsIterator.next());
-        assertFalse(elementsIterator.hasNext());
+        assertTrue(elementsIterator.hasPrevious());
+        assertEquals(15, elementsIterator.previous());
+        assertTrue(elementsIterator.hasPrevious());
+        assertEquals(20, elementsIterator.previous());
+        assertTrue(elementsIterator.hasPrevious());
+        assertEquals(10, elementsIterator.previous());
+        assertFalse(elementsIterator.hasPrevious());
     }
 
     @Test(expected = NoSuchElementException.class)
     public void testOutOfBounds() {
-        elementsIterator = new WideList<>().new ElementsIterator();
+        elementsIterator = new WideList<>().new ElementsListIterator(0);
         elementsIterator.next();
     }
 }

@@ -241,11 +241,13 @@ public class WideListTest {
         wideList.add(3);
         wideList.add(4);
         wideList.add(5);
+        wideList.add(null);
         int indexOf1 = wideList.indexOf(1);
         int indexOf2 = wideList.indexOf(2);
         int indexOf3 = wideList.indexOf(3);
         int indexOf4 = wideList.indexOf(4);
         int indexOf5 = wideList.indexOf(5);
+        int indexOfNull = wideList.indexOf(null);
         int indexOfNotFound = wideList.indexOf(100500);
 
         assertTrue(indexOf1 == 0);
@@ -253,6 +255,7 @@ public class WideListTest {
         assertTrue(indexOf3 == 2);
         assertTrue(indexOf4 == 3);
         assertTrue(indexOf5 == 4);
+        assertTrue(indexOfNull == 5);
         assertTrue(indexOfNotFound == -1);
     }
 
@@ -262,14 +265,17 @@ public class WideListTest {
         wideList.add(2);
         wideList.add(1);
         wideList.add(3);
+        wideList.add(null);
         int lastIndOf1 = wideList.lastIndexOf(1);
         int lastIndOf2 = wideList.lastIndexOf(2);
         int lastIndOf3 = wideList.lastIndexOf(3);
+        int lastIndOfNull = wideList.lastIndexOf(null);
         int lastIndOfNotFound = wideList.lastIndexOf(100500);
 
         assertTrue(lastIndOf1 == 2);
         assertTrue(lastIndOf2 == 1);
         assertTrue(lastIndOf3 == 3);
+        assertTrue(lastIndOfNull == 4);
         assertTrue(lastIndOfNotFound == -1);
     }
 

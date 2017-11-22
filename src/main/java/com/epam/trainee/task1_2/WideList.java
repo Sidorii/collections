@@ -74,8 +74,9 @@ public class WideList<T> implements List<T> {
     @NotNull
     @Override
     public Iterator<T> iterator() {
-        return new ElementsIterator();
+        return new ElementsListIterator(0);
     }
+
 
     @NotNull
     @Override
@@ -209,21 +210,25 @@ public class WideList<T> implements List<T> {
 
     @Override
     public int indexOf(Object o) {
-        return findFirstOrLastIndexOf(o, true);
+        ElementsListIterator it = new ElementsListIterator(0);
+
+        while (it.hasNext()) {
+            Object el = it.next();
+            if (el == o || (el != null && el.equals(o))) {
+                return it.previousIndex();
+            }
+        }
+        return -1;
     }
 
     @Override
     public int lastIndexOf(Object o) {
-        return findFirstOrLastIndexOf(o, false);
-    }
+        ElementsListIterator it = new ElementsListIterator(elementsCount-1);
 
-    private int findFirstOrLastIndexOf(Object o, boolean isFirst) {
-        ElementsIterator it = new ElementsIterator(isFirst);
-
-        while (it.hasNext()) {
-            Object el = it.next();
-            if (el != null && el.equals(o)) {
-                return it.getCurrentIndex();
+        while (it.hasPrevious()) {
+            Object el = it.previous();
+            if (el == o || (el != null && el.equals(o))) {
+                return it.nextIndex();
             }
         }
         return -1;
@@ -262,41 +267,8 @@ public class WideList<T> implements List<T> {
         return Arrays.deepToString(elements);
     }
 
-    class ElementsIterator implements Iterator<T> {
 
-        private boolean isForwardDirection;
-        private ElementsListIterator listIterator;
-
-        ElementsIterator() {
-            this(true);
-        }
-
-        ElementsIterator(boolean isForwardDirection) {
-            this.isForwardDirection = isForwardDirection;
-            if (isForwardDirection) {
-                listIterator = new ElementsListIterator(0);
-            } else {
-                listIterator = new ElementsListIterator(elementsCount - 1);
-            }
-        }
-
-        @Override
-        public boolean hasNext() {
-            return isForwardDirection ? listIterator.hasNext() : listIterator.hasPrevious();
-        }
-
-        @Override
-        public T next() {
-            return isForwardDirection ? listIterator.next() : listIterator.previous();
-        }
-
-        private int getCurrentIndex() {
-            return isForwardDirection ? listIterator.previousIndex() : listIterator.nextIndex();
-        }
-    }
-
-
-    private class ElementsListIterator implements ListIterator<T> {
+    protected class ElementsListIterator implements ListIterator<T> {
         private int point;
         private int head;
         private int tail;
