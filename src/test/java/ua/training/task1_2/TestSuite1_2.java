@@ -1,4 +1,4 @@
-package com.epam.trainee.task1_2;
+package ua.training.task1_2;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

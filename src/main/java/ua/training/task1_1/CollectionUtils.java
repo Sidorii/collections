@@ -1,4 +1,4 @@
-package com.epam.trainee.task1_1;
+package ua.training.task1_1;
 
 import java.util.Collection;
 import java.util.Map;

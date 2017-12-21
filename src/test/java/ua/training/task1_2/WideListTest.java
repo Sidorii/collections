@@ -1,4 +1,4 @@
-package com.epam.trainee.task1_2;
+package ua.training.task1_2;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 
-import static com.epam.trainee.task1_2.WideList.EXTENSION_PERCENT;
 import static org.junit.Assert.*;
 
 public class WideListTest {
@@ -70,7 +69,7 @@ public class WideListTest {
         assertEquals(elementsCount, wideList.size());
 
         int newCapacity = wideList.elements.length; //now capacity must be increased
-        int expectedCapacity = (int) (MIN_COUNT_FOR_CAPACITY_EXTENSION * EXTENSION_PERCENT) + 1;
+        int expectedCapacity = (int) (MIN_COUNT_FOR_CAPACITY_EXTENSION * WideList.EXTENSION_PERCENT) + 1;
 
         assertEquals(expectedCapacity, newCapacity);
     }
